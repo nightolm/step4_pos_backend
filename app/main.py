@@ -13,7 +13,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    ##allow_origins=["https://app-step4-1.azurewebsites.net"],
+    ##allow_origins=["https://xxxx.azurewebsites.net"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
