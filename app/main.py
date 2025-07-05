@@ -2,18 +2,18 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
 import os
-import mysql.connector
-
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+
 load_dotenv()
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    ##allow_origins=["https://xxxx.azurewebsites.net"],
+    allow_origins=["*"],  # 必要に応じてVercelのURLに絞ってもOK
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,22 +32,16 @@ class Transaction(BaseModel):
     items: List[TransactionItem]
 
 # DB接続用ヘルパー
-
 def get_connection():
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
-    )
+    return psycopg2.connect(os.getenv("DATABASE_URL"))
 
 # 商品情報を取得
 @app.get("/products/{code}")
 def get_product(code: str):
     try:
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT code, name, price FROM product_master WHERE code = %s", (code,))
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT code, name, price FROM prd WHERE code = %s", (code,))
         product = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -61,5 +55,5 @@ def get_product(code: str):
 @app.post("/transactions")
 def create_transaction(trn: Transaction):
     total = sum(item.price for item in trn.items)
-    # TODO: DBに取引を登録する実装
+    # TODO: Supabase側に insert 処理を追加（必要に応じて）
     return {"success": True, "total": total}
