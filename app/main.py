@@ -41,7 +41,8 @@ def get_product(code: str):
     try:
         conn = get_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT code, name, price FROM prd WHERE code = %s", (code,))
+        cursor.execute("SELECT code, name, price FROM prd WHERE TRIM(code) = %s", (code,))
+        ##cursor.execute("SELECT code, name, price FROM prd WHERE code = %s", (code,))
         product = cursor.fetchone()
         cursor.close()
         conn.close()
